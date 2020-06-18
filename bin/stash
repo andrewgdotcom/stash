@@ -1,0 +1,57 @@
+exec < $0
+
+# init
+
+__STASH__dir=$(mktemp -d)
+
+# jit compose
+
+# write boilerplate
+
+cat <<'EOF' > $__STASH__dir/main
+#!/bin/bash
+set -euo pipefail
+err_report() {
+    echo "errexit on line $(caller)" >&2
+}
+trap err_report ERR
+die() { echo -e "$2" >&2; exit "$1" }
+EOF
+
+# prepare second-pass files
+
+cat <<EOF > $__STASH__dir/parse_opt_conf
+declare -A PO_SHORT_MAP
+declare -A PO_LONG_MAP
+EOF
+echo . $__STASH__dir/parse_opt_conf >> $__STASH__dir/main
+
+# Here we need to either
+# a) cat the contents of admin-tools/parse-opt.sh or
+# b) source them from a helper file somewhere
+
+while IFS= read __STASH__inline
+do
+    # if not inside here-doc or not closing tag of here-doc, then
+    #   remove trailing comments
+    #   if continuation, slurp in next line and loop (deleting newline)
+    #   tokenise
+    #   detect structure
+    # if opening structure, push structure stack
+    # elif closing structure, pop structure stack
+    # write out
+    echo "$__STASH__outline" >> $__STASH__dir/main
+    # loop
+done
+
+# execute
+
+cat $__STASH__dir/main
+
+# cleanup
+
+rm -rf $__STASH__dir
+
+# explicitly exit so that we don't parse the calling file
+
+exit
