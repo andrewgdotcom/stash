@@ -2,30 +2,19 @@ exec < $0
 
 # boilerplate
 
-set -euo pipefail
-err_report() {
-    echo "errexit on line $(caller)" >&2
-}
-trap err_report ERR
-
-die() {
-    echo $2 >&2
-    exit $1
-}
-
-SCRIPT_DIR=$(dirname $(readlink -f $0))
-
-[[ -f $SCRIPT_DIR/poshlib/parse-opt.sh ]] || die 1 "Could not find poshlib"
-# No short arguments
-declare -A PO_SHORT_MAP
+SCRIPT_DIR=$(dirname $(readlink -f "${BASH_SOURCE[0]}"))
+. ${SCRIPT_DIR}/poshlib/init
+use swine
+use flatten
+use parse-opt
 
 # All long arguments are lowercase versions of their corresponding envars
 # with the prefix STASH_ removed.
-declare -A PO_LONG_MAP
-PO_LONG_MAP["flags:"]="STASH_FLAGS"
+PO_SIMPLE_PREFIX="STASH_"
+PO_SIMPLE_PARAMS="DEBUG"
 
 # parse command line options
-. $SCRIPT_DIR/poshlib/parse-opt.sh
+eval $(parse-opt-simple)
 
 # init
 
@@ -37,25 +26,18 @@ __STASH__dir=$(mktemp -d)
 
 cat <<'EOF' > $__STASH__dir/main
 #!/bin/bash
-set -euo pipefail
-err_report() {
-    echo "errexit on line $(caller)" >&2
-}
-trap err_report ERR
-die() { echo -e "$2" >&2; exit "$1" }
-EOF
+. ${SCRIPT_DIR}/poshlib/init
+use swine
+use flatten
+use parse-opt
 
-# prepare second-pass files
+EOF
 
 cat <<EOF > $__STASH__dir/parse_opt_conf
-declare -A PO_SHORT_MAP
-declare -A PO_LONG_MAP
+eval \$(parse-opt-init)
 EOF
-echo . $__STASH__dir/parse_opt_conf >> $__STASH__dir/main
+echo ". $__STASH__dir/parse_opt_conf" >> $__STASH__dir/main
 
-# Here we need to either
-# a) cat the contents of admin-tools/parse-opt.sh or
-# b) source them from a helper file somewhere
 
 while IFS= read __STASH__inline
 do
@@ -73,7 +55,7 @@ done
 
 # execute
 
-cat $__STASH__dir/main
+flatten $__STASH__dir/main
 
 # cleanup
 
