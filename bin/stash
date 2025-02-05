@@ -4,7 +4,8 @@ exec < $0
 
 SCRIPT_DIR=$(dirname $(readlink -f "${BASH_SOURCE[0]}"))
 . ${SCRIPT_DIR}/poshlib/poshlib.sh || exit 1
-use swine
+use strict
+use utils
 use flatten
 use parse-opt
 
@@ -27,7 +28,8 @@ __STASH__dir=$(mktemp -d)
 cat <<'EOF' > $__STASH__dir/main
 #!/bin/bash
 . ${SCRIPT_DIR}/poshlib/poshlib.sh || exit 1
-use swine
+use strict
+use utils
 use flatten
 use parse-opt
 
